@@ -7,7 +7,7 @@ variable	SEED2           equal ${seed2}
 variable        TAU_T           equal 0.05
 variable        TAU_P           equal 0.25
 variable        PRE             equal 1
-variable        path            string /leonardo_scratch/large/userexternal/atosello/LiNa/deepmd/Li/only_300/iter_2/models
+variable        path            string ${mpath}
 variable	species		string "Li N H"
 
 #SETUP
