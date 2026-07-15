@@ -1,0 +1,57 @@
+variable        NSTEPS1         equal 10000000
+variable        DUMP_FREQ       equal 500
+variable        DUMP_FREQ1      equal 500
+variable        TEMP1           equal ${temp}
+variable	SEED1           equal ${seed1}
+variable	SEED2           equal ${seed2}
+variable        TAU_T           equal 0.05
+variable        TAU_P           equal 0.25
+variable        PRE             equal 1
+variable        path            string ${mpath}
+variable	species		string "Li Na N"
+
+#SETUP
+#timer           timeout 86000
+units           metal
+boundary        p p p
+atom_style      atomic
+
+
+restart 50000 lmp.restart
+neigh_modify    delay 10 every 1
+
+read_data final.lammpsdata
+#read_data data.lmp
+
+mass          1 6.94	      # Li
+mass          2 22.98976928   # Na
+mass          3 14.0067       # N
+#mass          1 1.00784       # H
+
+pair_style deepmd ${path}/frozen_model_compressed_1.pb ${path}/frozen_model_compressed_2.pb ${path}/frozen_model_compressed_3.pb ${path}/frozen_model_compressed_4.pb out_freq ${DUMP_FREQ} out_file model_devi.out
+pair_coeff * *
+
+# TIMESTEP
+timestep	0.0005  #ps 
+thermo          ${DUMP_FREQ}
+thermo_style    custom step temp pe ke etotal density press vol
+thermo_modify   flush yes
+
+# COMPUTE
+compute		peatom all pe/atom
+
+# DUMP
+dump            traj all xyz ${DUMP_FREQ1} traj.xyz
+dump_modify     traj append yes element ${species}
+
+dump		1 all custom ${DUMP_FREQ1} traj.lammps id element type x y z fx fy fz c_peatom
+dump_modify	1 sort id
+dump_modify     1 append yes element ${species}
+
+velocity        all create ${TEMP1} ${SEED1} dist gaussian
+#fix             4 all plumed plumedfile plumed.dat
+fix             2 all nve
+fix             3 all temp/csvr ${TEMP1} ${TEMP1} ${TAU_T} ${SEED2}
+run             ${NSTEPS1}
+write_data      final.lammpsdata
+write_restart   final.restart
